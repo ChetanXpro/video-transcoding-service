@@ -9,4 +9,6 @@ functions:
   api:
     handler: index.handler
     events:
-      - httpApi: '*'
+      - httpApi:
+          path: /
+          method: get
