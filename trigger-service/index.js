@@ -1,5 +1,10 @@
 const Redis = require("ioredis");
-
+const AWS = require("aws-sdk");
+const ecs = new AWS.ECS({
+  accessKeyId: process.env.ACCESS_KEY,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  region: process.env.REGION, // Replace with your AWS region
+});
 module.exports.handler = async (event) => {
   let data;
   if (event) {
@@ -10,7 +15,7 @@ module.exports.handler = async (event) => {
     }
   }
 
-  if (!data || !data.post || !data.type || !data.key) {
+  if (!data || !data.post || !data.type || !data.c) {
     return {
       statusCode: 200,
       body: JSON.stringify(
@@ -38,7 +43,38 @@ module.exports.handler = async (event) => {
   }
 
   async function triggerTranscodingJob(job) {
-    //!TODO - RUN ECS TASK HERE
+    try {
+      const taskDefinition = "your_task_definition_name";
+      const cluster = "your_cluster_name";
+      const count = 1; // Number of instances to run (optional)
+
+      const startTaskResult = await ecs
+        .startTask({
+          taskDefinition,
+          cluster,
+          overrides: {
+            containerOverrides: [
+              {
+                environment: [
+                  {
+                    name: "VIDEO_KEY",
+                    value: job.key,
+                  },
+                ],
+              },
+            ],
+          },
+          count,
+        })
+        .promise();
+
+      console.log("ECS task started:", startTaskResult.tasks);
+
+      return "ECS task started";
+    } catch (error) {
+      console.error("Error triggering ECS task:", error);
+      throw error;
+    }
   }
 
   if (data.Records) {
