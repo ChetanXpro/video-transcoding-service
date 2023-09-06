@@ -1,12 +1,9 @@
-service: auth
-frameworkVersion: "3"
+service: trigger-service
+frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: dev
-  profile: profile2
-  region: ap-south-1
 
 functions:
   api:

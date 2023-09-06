@@ -1,18 +1,32 @@
 const AWS = require("aws-sdk");
 
 AWS.config.update({
-  accessKeyId: "YOUR_ACCESS_KEY_ID",
-  secretAccessKey: "YOUR_SECRET_ACCESS_KEY",
-  region: "YOUR_REGION", // Replace with your AWS region
+  accessKeyId: process.env.ACCESS_KEY,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY,
+  region: process.env.REGION, // Replace with your AWS region
 });
+
 module.exports.handler = async (event) => {
   let data;
-  if (event.body) {
-    if (typeof event.body === "string") {
-      data = JSON.parse(event.body).data;
+  if (event) {
+    if (typeof event === "string") {
+      data = JSON.parse(event);
     } else {
-      data = event.body.data;
+      data = event;
     }
+  }
+
+  if (!data || !data.post || !data.type || !data.key) {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(
+        {
+          message: "Please provide all the required fields",
+        },
+        null,
+        2
+      ),
+    };
   }
 
   const s3 = new AWS.S3();
@@ -31,9 +45,9 @@ module.exports.handler = async (event) => {
       console.log(
         JSON.stringify(`[GET S3 UPLOAD URL SERVICE] ${JSON.stringify(payload)}`)
       );
-      const S3_BUCKET = AWS_S3_BUCKET;
-      const REGION = AWS_REGION;
-      const URL_EXPIRATION_TIME = 600; // in seconds
+      const S3_BUCKET = process.env.S3_BUCKET;
+      const REGION = process.env.REGION;
+      const URL_EXPIRATION_TIME = 6000; // in seconds
 
       const { fileType, s3ObjectKey } = payload;
 
@@ -74,7 +88,7 @@ module.exports.handler = async (event) => {
 
   if (checkIfAuthenticated(data)) {
     const payload = {
-      fileType: "video/mp4",
+      fileType: data.type,
       s3ObjectKey: data.key,
     };
     const url = await generatePreSignedPutUrl(payload);
@@ -95,7 +109,7 @@ module.exports.handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: "Your function executed successfully!",
+        message: "END: Your function executed successfully!",
         input: event,
       },
       null,
