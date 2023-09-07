@@ -1,6 +1,7 @@
 service: auth
 frameworkVersion: "3"
 
+useDotenv: true
 provider:
   name: aws
   runtime: nodejs18.x
@@ -9,8 +10,14 @@ provider:
   region: ap-south-1
 
 functions:
-  api:
+  auth:
     handler: index.handler
+    environment:
+      ACCESS_KEY: ${env:ACCESS_KEY}
+      SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
+      REGION: ${env:REGION}
+      S3_BUCKET: ${env:S3_BUCKET}
+      MONGO_URI: ${env:MONGO_URI}
     events:
       - httpApi:
           path: /

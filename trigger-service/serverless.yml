@@ -1,13 +1,25 @@
 service: trigger-service
-frameworkVersion: '3'
+frameworkVersion: "3"
 
+useDotenv: true
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  profile: profile2
 
 functions:
-  api:
+  trigger:
     handler: index.handler
+    environment:
+      ACCESS_KEY: ${env:ACCESS_KEY}
+      SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
+      REGION: ${env:REGION}
+      S3_BUCKET: ${env:S3_BUCKET}
+      REDIS_HOST: ${env:REDIS_HOST}
+      REDIS_PORT: ${env:REDIS_PORT}
+      REDIS_PASSWORD: ${env:REDIS_PASSWORD}
+      MONGO_URI: ${env:MONGO_URI}
     events:
       - httpApi:
           path: /

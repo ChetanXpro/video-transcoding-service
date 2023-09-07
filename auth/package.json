@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "aws-sdk": "^2.1450.0"
+    "aws-sdk": "^2.1450.0",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.0"
   }
 }

@@ -1,119 +1,170 @@
 const AWS = require("aws-sdk");
 
+const { v4: uuidv4 } = require("uuid");
 AWS.config.update({
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: process.env.REGION, // Replace with your AWS region
+  region: process.env.REGION,
 });
 
 module.exports.handler = async (event) => {
-  let data;
-  if (event) {
-    if (typeof event === "string") {
-      data = JSON.parse(event);
+  try {
+    console.log("Event", JSON.stringify(event));
+    let data;
+    if (!event.body) {
+      if (typeof event === "string") {
+        data = JSON.parse(event);
+      } else {
+        data = event;
+      }
     } else {
-      data = event;
+      if (typeof event.body === "string") {
+        data = JSON.parse(event.body);
+      } else {
+        data = event.body;
+      }
     }
-  }
 
-  if (!data || !data.post || !data.type || !data.key) {
-    return {
-      statusCode: 200,
-      body: JSON.stringify(
-        {
-          message: "Please provide all the required fields",
-        },
-        null,
-        2
-      ),
-    };
-  }
-
-  const s3 = new AWS.S3();
-  const checkIfAuthenticated = (data) => {
-    // !TODO - Add authentication logic here
-
-    if (data.post === "teacher") {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  const generatePreSignedPutUrl = async (payload) => {
-    try {
-      console.log(
-        JSON.stringify(`[GET S3 UPLOAD URL SERVICE] ${JSON.stringify(payload)}`)
-      );
-      const S3_BUCKET = process.env.S3_BUCKET;
-      const REGION = process.env.REGION;
-      const URL_EXPIRATION_TIME = 6000; // in seconds
-
-      const { fileType, s3ObjectKey } = payload;
-
-      const myBucket = new AWS.S3({
-        params: { Bucket: S3_BUCKET },
-        region: REGION,
-      });
-
-      return new Promise((resolve, reject) => {
-        myBucket.getSignedUrl(
-          "putObject",
+    if (!data || !data?.post || !data?.type || !data?.userID) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify(
           {
-            Key: s3ObjectKey,
-            ContentType: fileType,
-            Expires: URL_EXPIRATION_TIME,
+            message: "Please provide all the required fields",
           },
-          (err, url) => {
-            if (err) {
-              console.error(err);
-
-              return reject(err);
-            } else {
-              console.log("upload url", url);
-              resolve(url); // API Response Here
-            }
-          }
-        );
-      });
-    } catch (error) {
-      console.log(
-        JSON.stringify(
-          `[GET S3 UPLOAD URL SERVICE ERROR] ${JSON.stringify(error)}`
-        )
-      );
-      throw new error();
+          null,
+          2
+        ),
+      };
     }
-  };
 
-  if (checkIfAuthenticated(data)) {
-    const payload = {
-      fileType: data.type,
-      s3ObjectKey: data.key,
+    // Check if env setup properly
+
+    const checkIfAuthenticated = (data) => {
+      // !TODO - Add authentication logic here
+
+      if (data.post == "teacher") {
+        return true;
+      } else {
+        return false;
+      }
     };
-    const url = await generatePreSignedPutUrl(payload);
+
+    const generatePreSignedPutUrl = async (payload) => {
+      try {
+        console.log(
+          JSON.stringify(
+            `[GET S3 UPLOAD URL SERVICE] ${JSON.stringify(payload)}`
+          )
+        );
+        const S3_BUCKET = process.env.S3_BUCKET;
+        const REGION = process.env.REGION;
+        const URL_EXPIRATION_TIME = 60000; // in seconds
+
+        const { fileType, s3ObjectKey } = payload;
+
+        const myBucket = new AWS.S3({
+          params: { Bucket: S3_BUCKET },
+          region: REGION,
+        });
+
+        return new Promise((resolve, reject) => {
+          myBucket.getSignedUrl(
+            "putObject",
+            {
+              Key: s3ObjectKey,
+              ContentType: fileType,
+              Expires: URL_EXPIRATION_TIME,
+            },
+            (err, url) => {
+              if (err) {
+                console.error(err);
+
+                return reject(err);
+              } else {
+                console.log("upload url", url);
+                resolve(url); // API Response Here
+              }
+            }
+          );
+        });
+      } catch (error) {
+        console.log(
+          JSON.stringify(
+            `[GET S3 UPLOAD URL SERVICE ERROR] ${JSON.stringify(error)}`
+          )
+        );
+        return {
+          statusCode: 400,
+          body: JSON.stringify(
+            {
+              message: "END: Fail to generate pre-signed url",
+              input: event,
+            },
+            null,
+            2
+          ),
+        };
+      }
+    };
+    const getFileExtension = (mimeType) => {
+      const parts = mimeType.split("/");
+      if (parts.length === 2) {
+        return "." + parts[1];
+      }
+      return "";
+    };
+
+    if (checkIfAuthenticated(data)) {
+      const fileName =
+        data.userID +
+        "-" +
+        uuidv4() +
+        "_original" +
+        getFileExtension(data.type);
+      const payload = {
+        fileType: data.type,
+        s3ObjectKey: fileName,
+      };
+
+      const url = await generatePreSignedPutUrl(payload);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(
+          {
+            message: "Success",
+            input: event,
+            url,
+          },
+          null,
+          2
+        ),
+      };
+    } else {
+      return {
+        statusCode: 400,
+        body: JSON.stringify(
+          {
+            message: "Not authenticated",
+            input: event,
+          },
+          null,
+          2
+        ),
+      };
+    }
+  } catch (error) {
     return {
-      statusCode: 200,
+      statusCode: 400,
       body: JSON.stringify(
         {
-          message: "Success",
-          input: event,
-          url,
+          message: "Function error",
+          error,
         },
         null,
         2
       ),
     };
   }
-  return {
-    statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: "END: Your function executed successfully!",
-        input: event,
-      },
-      null,
-      2
-    ),
-  };
 };
