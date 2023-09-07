@@ -8,7 +8,7 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.SECRET_ACCESS_KEY,
-  region: process.env.REGION, // Replace with your AWS region
+  region: process.env.REGION,
 });
 
 async function uploadFileToS3(fileName, bucketName) {

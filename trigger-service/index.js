@@ -112,7 +112,7 @@ module.exports.handler = async (event, context) => {
                   environment: [
                     {
                       name: "VideoID",
-                      value: video._id,
+                      value: "VALUE",
                     },
                   ],
                 },
