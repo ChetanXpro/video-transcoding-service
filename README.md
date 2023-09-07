@@ -32,7 +32,7 @@ FFmpeg is used to transcode videos into multiple resolutions:
 
 Follow these steps to set up and run the video transcoding service:
 
-1. Clone the repository: `git clone https://github.com/yourusername/videotranscoder.git`
+1. Clone the repository: `git clone https://github.com/ChetanXpro/video-transcoding-service.git`
 
 2. Set up the AWS resources and services as described in the project documentation.
 
