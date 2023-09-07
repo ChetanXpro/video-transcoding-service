@@ -40,13 +40,4 @@ Follow these steps to set up and run the video transcoding service:
 
 4. Start transcoding videos with ease!
 
-## Usage
 
-Provide usage examples and instructions on how to use your service and its components. You can include code snippets, API endpoints, or screenshots.
-
-### Example:
-
-To authorize a user and get a presigned PUT URL:
-
-```bash
-curl -X POST https://your-api-endpoint.com/auth
