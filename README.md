@@ -1,4 +1,4 @@
-# Video Transcoding Service
+# Video Transcoding Service (PROJECT IN PROGRESS)
 
 A video transcoding service built with AWS Lambda, ECS, and FFmpeg for editing audio and video files programmatically.
 
