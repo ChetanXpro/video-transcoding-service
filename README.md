@@ -18,7 +18,7 @@ This function is triggered by S3 when someone uploads any video using a presigne
 
 ### Web UI (/webui)
 
-A basic frontend for the video transcoding service, allowing users to interact with the service and initiate video transcoding.
+A basic frontend for the video transcoding service, allowing users to upload video and initiate video transcoding.
 
 ## Video Transcoding
 
