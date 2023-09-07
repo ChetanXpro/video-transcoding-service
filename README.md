@@ -10,7 +10,7 @@ This function checks if a user is authorized. If authenticated, it returns a pre
 
 ### ECS Task (/ecs-task)
 
-This Docker container has FFmpeg installed and is used to transcode videos efficiently.
+This Docker container has FFmpeg installed and is used to transcode videos efficiently. and then uplod those diff videos to s3
 
 ### Trigger Service (/trigger-service)
 
