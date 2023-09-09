@@ -27,7 +27,7 @@ module.exports.handler = async (event, context) => {
       }
     }
 
-    if (!data || !data.post || !data.type || !data.userID) {
+    if (!data || !data.post || !data.type || !data.userID || !data.name) {
       return {
         statusCode: 200,
         body: JSON.stringify(
@@ -63,19 +63,13 @@ module.exports.handler = async (event, context) => {
       });
 
       await conn.asPromise();
-
-      // const video = await videos.create({
-      //   fileName: data.post,
-      //   type: data.type,
-      //   key: data.key,
-      //   progress: 0,
-      // });
     }
 
     const videos = conn.model(
       "VIDEOS",
       new mongoose.Schema({
         fileName: String,
+        hostedFiles: [{ type: String }],
         type: String,
         userID: String,
         progress: Number,
@@ -89,7 +83,7 @@ module.exports.handler = async (event, context) => {
     });
 
     async function enqueueJobInQueue(job) {
-      await redis.lpush("VIDEO_TRANSCODING_QUEUE", JSON.stringify(job));
+      return await redis.lpush("VIDEO_TRANSCODING_QUEUE", JSON.stringify(job));
     }
     async function dequeueJobFromQueue() {
       const job = await redis.rpop("VIDEO_TRANSCODING_QUEUE");
@@ -98,33 +92,51 @@ module.exports.handler = async (event, context) => {
 
     async function triggerTranscodingJob(job) {
       try {
-        const taskDefinition = "your_task_definition_name";
-        const cluster = "your_cluster_name";
-        const count = 1; // Number of instances to run (optional)
+        const taskDefinition = ""; // Enter task definition here
+        const cluster = ""; // Enter cluster name here
+        const count = 1;
 
-        const startTaskResult = await ecs
-          .startTask({
+        const startTaskResult = ecs.runTask(
+          {
             taskDefinition,
+            capacityProviderStrategy: [{ capacityProvider: "FARGATE" }],
             cluster,
+            count,
+            networkConfiguration: {
+              awsvpcConfiguration: {
+                subnets: [], // Enter subnets here
+                securityGroups: [], // Enter security groups here
+                assignPublicIp: "ENABLED",
+              },
+            },
+
+            // launchType: "FARGATE",
             overrides: {
               containerOverrides: [
                 {
+                  name: "transcoding",
                   environment: [
                     {
-                      name: "VideoID",
-                      value: "VALUE",
+                      name: "VIDEO_NAME",
+                      value: job.fileName,
                     },
                   ],
                 },
               ],
             },
-            count,
-          })
-          .promise();
+          },
+          (err, data) => {
+            if (err) {
+              console.log(err);
+              return err;
+            } else {
+              console.log(data);
+              return data;
+            }
+          }
+        );
 
-        console.log("ECS task started:", startTaskResult.tasks);
-
-        return "ECS task started";
+        return startTaskResult;
       } catch (error) {
         console.error("Error triggering ECS task:", error);
         throw error;
@@ -134,9 +146,10 @@ module.exports.handler = async (event, context) => {
       const currentJobCount = await redis.get("CURRENT_VIDEO_TRANSCODING_JOB");
 
       const video = await videos.create({
-        fileName: job.post,
+        fileName: data.name,
         type: data.type,
         userID: data.userID,
+        hostedFile: [],
         progress: 1,
       });
 
@@ -144,29 +157,28 @@ module.exports.handler = async (event, context) => {
         // Increment the job count and trigger the transcoding job
 
         await redis.incr("CURRENT_VIDEO_TRANSCODING_JOB");
-        await triggerTranscodingJob();
+        return await triggerTranscodingJob();
       } else {
         // Enqueue the job in the Redis queue
         const job = {
+          fileName: data.name,
           post: payload.post,
           type: payload.type,
-          userID: payload.key,
+          userID: payload.userID,
         };
-        await enqueueJobInQueue(job);
+        return await enqueueJobInQueue(job);
       }
     };
-    if (data.Records) {
-      // Triggered from S3
-      await TriggerFromS3(data);
-    }
 
+    // !TODO - Trigger from ECS
     const TriggerFromEcs = async (payload) => {
-      const { userID } = payload;
+      const { userID, videoId, progress, hostedFiles } = payload;
 
-      if (userID) {
+      if (userID && videoId && progress && hostedFiles) {
         const video = await videos.findOne({ userId: userID });
 
-        video.progress = 3;
+        video.progress = progress;
+        video.hostedFiles = hostedFiles;
 
         await video.save();
       }
@@ -214,6 +226,32 @@ module.exports.handler = async (event, context) => {
       }
     };
 
+    if (data.Records) {
+      // Triggered from S3
+      const result = await TriggerFromS3(data);
+      if (conn) {
+        await conn.close();
+      }
+
+      if (redis) {
+        await redis.quit();
+      }
+      return {
+        statusCode: 200,
+        body: JSON.stringify(
+          {
+            message: "success",
+            result: result,
+          },
+          null,
+          2
+        ),
+      };
+    } else {
+      // Triggered from ECS
+      await TriggerFromEcs(data);
+    }
+
     if (conn) {
       await conn.close();
     }
@@ -226,7 +264,7 @@ module.exports.handler = async (event, context) => {
       statusCode: 200,
       body: JSON.stringify(
         {
-          message: "Go Serverless v3.0! Your function executed successfully!",
+          message: "Triggered successfully",
           input: event,
         },
         null,
@@ -242,11 +280,11 @@ module.exports.handler = async (event, context) => {
     }
 
     return {
-      statusCode: 200,
+      statusCode: 400,
       body: JSON.stringify(
         {
-          message: "Go Serverless v3.0! Your function executed successfully!",
-          input: event,
+          status: "Error",
+          error,
         },
         null,
         2

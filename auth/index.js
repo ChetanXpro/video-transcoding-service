@@ -117,15 +117,13 @@ module.exports.handler = async (event) => {
 
     if (checkIfAuthenticated(data)) {
       const fileName =
-        data.userID +
-        "-" +
-        uuidv4() +
-        "_original" +
-        getFileExtension(data.type);
+        data.userID + "-" + uuidv4() + getFileExtension(data.type);
       const payload = {
         fileType: data.type,
         s3ObjectKey: fileName,
       };
+
+      console.log("Presignedurl Payload", JSON.stringify(payload));
 
       const url = await generatePreSignedPutUrl(payload);
 

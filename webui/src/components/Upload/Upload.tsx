@@ -20,7 +20,7 @@ const Upload = () => {
   type PreSignedUrlRequest = {
     post: string;
     type: string;
-    key: string;
+    userID: string;
   };
 
   const FUNCTION_URL = process.env.NEXT_PUBLIC_UPLOAD_FUNCTION_URL ?? "";
@@ -32,7 +32,7 @@ const Upload = () => {
     const data = {
       post: "teacher",
       type: file?.type ?? "",
-      key: DUMMY_USER_LIST[user],
+      userID: DUMMY_USER_LIST[user] ?? DUMMY_USER_LIST[0],
     } satisfies PreSignedUrlRequest;
     const response = await fetch(FUNCTION_URL, {
       method: "POST",

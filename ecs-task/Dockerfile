@@ -8,8 +8,9 @@ RUN apk update && apk add nodejs npm
 WORKDIR /app
 
 # Copy your Node.js script (e.g., index.js) and package files into the container
-COPY index.js package.json video.mp4 package-lock.json ./
+COPY index.js package.json  package-lock.json ./
 
+COPY utils/ ./utils/
 # Install Node.js dependencies
 RUN npm install
 
