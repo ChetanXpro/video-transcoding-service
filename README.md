@@ -16,7 +16,7 @@ This Docker container has FFmpeg installed and is used to transcode videos effic
 
 This function is triggered by S3 when someone uploads any video using a presigned PUT URL.
 
-### Web UI (/webui)
+### Web UI (/webui) (PENDING)
 
 A basic frontend for the video transcoding service, allowing users to upload video and initiate video transcoding.
 
