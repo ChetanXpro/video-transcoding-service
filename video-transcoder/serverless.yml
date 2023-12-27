@@ -1,0 +1,17 @@
+service: video-transcoder
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: dev
+  region: ap-south-1
+
+plugins:
+  - serverless-offline
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi: '*'
