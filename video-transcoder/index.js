@@ -1,3 +1,4 @@
+require("dotenv").config();
 const serverless = require("serverless-http");
 const express = require("express");
 
@@ -11,6 +12,7 @@ app.get("/", (req, res, next) => {
   });
 });
 app.use("/user", require("./routes/userRoute"));
+app.use("/video", require("./routes/transcoderRoutes"));
 
 app.use((req, res, next) => {
   return res.status(404).json({
