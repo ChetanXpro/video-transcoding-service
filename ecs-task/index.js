@@ -6,34 +6,55 @@ const {
   checkIfFileExists,
   removeFileExtension,
 } = require("./utils/videoProcessing");
-
-// Dummy filenames for testing purpose only
+const { VIDEO_PROCESS_STATES } = require("./utils/const");
 
 let ffmpegCommands = [];
 let allFiles = [];
 
 let videoFormats = [
   { name: "144p", scale: "256:144" },
-  { name: "360p", scale: "640:360" },
-  { name: "1080p", scale: "1920:1080" },
+  // { name: "360p", scale: "640:360" },
+  // { name: "1080p", scale: "1920:1080" },
 ];
 
-const marktaskCompleted = async (userId, videoId, allFiles) => {
-  const res = await axios.post(
-    "https://webhook.site/8ec4f54b-02a0-4218-8a6f-0bf3fb93a1f6",
-    {
+const marktaskCompleted = async (userId, videoId, allFilesObject) => {
+  try {
+    const webhook = process.env.WEBHOOK_URL;
+    console.log("Webhook URL:", webhook);
+    const res = await axios.post(webhook, {
       userID: userId,
       videoId,
-      progress: 3,
-      hostedFiles: allFiles,
+      progress: VIDEO_PROCESS_STATES.COMPLETED,
+      hostedFiles: allFilesObject,
+    });
+
+    if (res.status === 200) {
+      console.log("Webhook called successfully");
     }
-  );
-
-  if (res.status === 200) {
-    console.log("Webhook called successfully");
+  } catch (error) {
+    console.log("Error Axios call:", error);
+    process.exit();
   }
+};
 
-  process.exit();
+const marktaskFailed = async (userId, videoId) => {
+  try {
+    const webhook = process.env.WEBHOOK_URL;
+    console.log("Webhook URL:", webhook);
+    const res = await axios.post(webhook, {
+      userID: userId,
+      videoId,
+      progress: VIDEO_PROCESS_STATES.FAILED,
+      hostedFiles: {},
+    });
+
+    if (res.status === 200) {
+      console.log("Webhook called successfully");
+    }
+  } catch (error) {
+    console.log("Error Axios call:", error);
+    process.exit();
+  }
 };
 
 (async function () {
@@ -47,11 +68,16 @@ const marktaskCompleted = async (userId, videoId, allFiles) => {
       process.exit();
     }
 
-    const userId = videoToProcess.split("-")[0];
+    const userId = process.env.USER_ID;
+
+    if (!userId) {
+      console.log("User ID env not found");
+      process.exit();
+    }
 
     const url = await generatePreSignedGetUrl({
       s3ObjectKey: videoToProcess,
-      s3Bucket: "video-transcodingg/temp",
+      s3Bucket: process.env.TEMP_S3_BUCKET,
     });
 
     if (!url) {
@@ -72,9 +98,11 @@ const marktaskCompleted = async (userId, videoId, allFiles) => {
       ffmpegCommands.push(
         `-i ${videoToProcess} -y -vf scale=${
           format.scale
-        } -c:v libx264 -c:a copy -f mp4 ${outputvideoName + format.name}.mp4`
+        } -c:v libx264 -c:a copy -f mp4 ${
+          outputvideoName + "-" + format.name
+        }.mp4`
       );
-      allFiles.push(`${outputvideoName + format.name}.mp4`);
+      allFiles.push(`${outputvideoName + "-" + format.name}.mp4`);
     });
 
     await runParallelFFmpegCommands(ffmpegCommands);
@@ -97,7 +125,22 @@ const marktaskCompleted = async (userId, videoId, allFiles) => {
 
     if (allSuccessful) {
       console.log("All uploads completed successfully");
-      marktaskCompleted(userId, videoToProcess, allFiles);
+
+      let allFilesObject = {};
+
+      allFiles.map((file) => {
+        if (file.includes("144p")) {
+          allFilesObject["144p"] = file;
+        } else if (file.includes("360p")) {
+          allFilesObject["360p"] = file;
+        } else if (file.includes("720p")) {
+          allFilesObject["720p"] = file;
+        } else if (file.includes("1080p")) {
+          allFilesObject["1080p"] = file;
+        }
+      });
+
+      marktaskCompleted(userId, videoToProcess, allFilesObject);
     } else {
       console.log("Some uploads failed. Details:");
 
@@ -111,6 +154,8 @@ const marktaskCompleted = async (userId, videoId, allFiles) => {
           );
         }
       });
+
+      marktaskFailed(userId, videoToProcess);
       process.exit();
     }
   } catch (error) {

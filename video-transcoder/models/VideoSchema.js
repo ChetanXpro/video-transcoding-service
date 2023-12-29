@@ -6,15 +6,17 @@ const VideoSchema = new mongoose.Schema({
     "360p": String,
     "720p": String,
   },
+  orignalVideoId: String,
   thumbnailUrl: String,
   type: String,
   userID: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    // type: mongoose.Schema.Types.ObjectId,
+    // ref: "User",
+    type: String,
   },
   progress: {
-    type: Enum,
-    values: ["pending", "processing", "completed", "failed"],
+    type: String,
+    values: ["pending", "processing", "completed", "failed", "in-queue"],
   },
 });
 module.exports =

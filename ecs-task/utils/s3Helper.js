@@ -12,6 +12,11 @@ const generatePreSignedGetUrl = async (payload) => {
       JSON.stringify(`[GET S3 DOWNLOAD URL SERVICE] ${JSON.stringify(payload)}`)
     );
 
+    console.log("Access Key", process.env.ACCESS_KEY);
+    console.log("Secret Access Key", process.env.SECRET_ACCESS_KEY);
+    console.log("Region", process.env.REGION);
+    console.log("Bucket", process.env.S3_BUCKET);
+
     const { s3ObjectKey, s3Bucket } = payload;
 
     const URL_EXPIRATION_TIME = 60000;

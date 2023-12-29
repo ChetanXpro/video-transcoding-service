@@ -1,5 +1,6 @@
 const VIDEO_PROCESS_STATES = {
   PENDING: "pending",
+  IN_QUEUE: "in-queue",
   PROCESSING: "processing",
   COMPLETED: "completed",
   FAILED: "failed",

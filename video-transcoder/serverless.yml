@@ -13,6 +13,8 @@ provider:
     REDIS_URL: ${env:REDIS_URL}
     MONGODB_URI: ${env:MONGODB_URI}
     S3_BUCKET: ${env:S3_BUCKET}
+    WEBHOOK_URL: ${env:WEBHOOK_URL}
+    TEMP_S3_BUCKET: ${env:TEMP_S3_BUCKET}
 
 plugins:
   - serverless-offline

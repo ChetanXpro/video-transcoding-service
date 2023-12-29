@@ -7,7 +7,8 @@ module.exports.handler = async (event) => {
     const s3EventData = event.Records[0].s3;
 
     console.log("S3 EVENT", event);
-    await axios.post(process.env.API_ENDPOINT, { s3EventData });
+    const resp = await axios.post(process.env.API_ENDPOINT, { s3EventData });
+    console.log("RESPONSE", resp);
     console.log("S3 event processed successfully.", s3EventData);
 
     return {

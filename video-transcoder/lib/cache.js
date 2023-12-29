@@ -27,7 +27,7 @@ const setKey = async (key, value, expire = 0, setIfNotExist = false) => {
   if (setIfNotExist) params.push("NX");
 
   // console.log("command : SET ", params);
-  let response = await client.sendCommand("SET", params);
+  let response = await redis.sendCommand("SET", params);
 
   if (response) {
     console.log(key + " set to => " + value);
@@ -36,15 +36,19 @@ const setKey = async (key, value, expire = 0, setIfNotExist = false) => {
 };
 
 const increment = async (key) => {
-  let value = await client.incr(key);
+  let value = await redis.incr(key);
   console.log("incremented key : ", key, " value : ", value);
   return value;
 };
 
 const decrement = async (key) => {
-  let value = await client.decr(key);
+  let value = await redis.decr(key);
   console.log("decremented key : ", key, " value : ", value);
   return value;
+};
+
+const getQueueLength = async () => {
+  return await redis.llen(REDIS_KEYS.VIDEO_TRANSCODING_QUEUE);
 };
 
 module.exports = {
@@ -55,4 +59,5 @@ module.exports = {
   setKey,
   increment,
   decrement,
+  getQueueLength,
 };
