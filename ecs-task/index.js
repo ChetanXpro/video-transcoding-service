@@ -13,8 +13,8 @@ let allFiles = [];
 
 let videoFormats = [
   { name: "144p", scale: "256:144" },
-  // { name: "360p", scale: "640:360" },
-  // { name: "1080p", scale: "1920:1080" },
+  { name: "360p", scale: "640:360" },
+  { name: "1080p", scale: "1920:1080" },
 ];
 
 const marktaskCompleted = async (userId, videoId, allFilesObject) => {
