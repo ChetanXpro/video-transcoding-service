@@ -197,6 +197,7 @@ const triggerFromECS = asyncHandler(async (req, res, next) => {
       if (job) {
         await triggerTranscodingJob(job);
 
+        await increment(REDIS_KEYS.CURRENT_VIDEO_TRANSCODING_JOB_COUNT);
         await Video.updateOne(
           { userID: job.userID, orignalVideoId: job.orignalVideoId },
           { progress: VIDEO_PROCESS_STATES.PROCESSING }

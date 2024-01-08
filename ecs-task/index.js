@@ -53,7 +53,7 @@ const marktaskFailed = async (userId, videoId) => {
     }
   } catch (error) {
     console.log("Error Axios call:", error);
-    process.exit();
+    throw error;
   }
 };
 
