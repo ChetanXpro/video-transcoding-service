@@ -4,21 +4,16 @@ A video transcoding service built with AWS Lambda, ECS, and FFmpeg for editing a
 
 ## Functions
 
-### Auth Function (/auth)
+### Auth Function (/video-transcoder)
 
-This function checks if a user is authorized. If authenticated, it returns a presigned PUT URL.
+This is main serverless express api which will trigger jobs and handle auth and db updates
 
 ### ECS Task (/ecs-task)
 
-This Docker container has FFmpeg installed and is used to transcode videos efficiently. and then uplod those diff videos to s3
+This Docker container has FFmpeg installed and is used to transcode videos efficiently. and then upload those diff videos to s3
 
-### Trigger Service (/trigger-service)
-
-This function is triggered by S3 when someone uploads any video using a presigned PUT URL.
-
-### Web UI (/webui) (PENDING)
-
-A basic frontend for the video transcoding service, allowing users to upload video and initiate video transcoding.
+### Trigger Service (/triggerAPI)
+This function will get triggers from S3 , then it will just call main serverless api and send s3 event data.
 
 ## Video Transcoding
 
@@ -28,13 +23,7 @@ FFmpeg is used to transcode videos into multiple resolutions:
 - 360p
 - 1080p
 
-## Getting Started
 
-Follow these steps to set up and run the video transcoding service:
-
-1. Clone the repository: `git clone https://github.com/ChetanXpro/video-transcoding-service.git`
-
-2. Set up the AWS resources and services as described in the project documentation.
 
 3. Build and deploy the Lambda functions, Docker container, and web UI.
 
